@@ -16,6 +16,7 @@ public class SeatServer{
 	private int[] q;
 	private int done_counter;
 	private boolean[] down;
+	private boolean sycned;
 	static Semaphore semaphore;
 	public class newRun implements Runnable {
 		private Socket s;
@@ -45,6 +46,7 @@ public class SeatServer{
         Server_ID = ID;
 		//Topology.readNeighbors(ID, Theatre.NUM_Server, neighbors);
 		table = new SeatTable();
+		sycned = false;
 		//link = new Linker(t, ID, Theatre.NUM_Server);
 		for (int i = 0;i < q.length;i++) {
 			q[i] = Integer.MAX_VALUE;
@@ -240,7 +242,9 @@ public class SeatServer{
 			}
 			else if (tag.equals("recover")){
 				semaphore.acquire();
-				down[] = false;
+				if (down[source] = true) {
+
+				}
 				semaphore.release();
 			}
 		}
