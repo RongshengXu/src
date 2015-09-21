@@ -11,17 +11,28 @@ public class Client1 {
         File f = new File(".");
         String path = f.getAbsolutePath().substring(0, f.getAbsolutePath().length() - 1);
         try {
-            ReservationSystem rs = new ReservationSystem(path + "/src/table.txt");
-            System.out.println("A new user started: ");
-            rs.search("1");
-            rs.reserve("1", 5);
-            rs.search("1");
-            rs.reserve("2", 6);
-            rs.search("2");
-            rs.search("3");
-            rs.reserve("3", 5);
-            rs.delete("Xuan");
-            rs.reserve("3", 6);
+            while (true) {
+                ReservationSystem rs = new ReservationSystem(path + "/src/table.txt");
+                System.out.println("Command:");
+                Scanner in = new Scanner(System.in);
+                String command = in.nextLine();
+                System.out.println(command);
+                StringTokenizer st = new StringTokenizer(command);
+                String tag = st.nextToken();
+                if (tag.equals("delete")) {
+                    String name = st.nextToken();
+                    rs.delete(name);
+                }
+                else if (tag.equals("reserve")) {
+                    String name = st.nextToken();
+                    int count = Integer.parseInt(st.nextToken());
+                    rs.reserve(name, count);
+                }
+                else if (tag.equals("search")) {
+                    String name = st.nextToken();
+                    rs.search(name);
+                }
+            }
         } catch (Exception e) {
             System.out.println("Reservation system aborted: " + e);
         }
