@@ -3,7 +3,6 @@
  */
 import java.net.ServerSocket;
 import java.net.Socket;
-
 public class Server3 {
     public static void main(String[] args) {
         System.out.println("SeatServer started: ");
@@ -14,9 +13,8 @@ public class Server3 {
             while (true){
                 System.out.println("*****Waiting for a client:*****");
                 Socket aClient = listener.accept();
-                System.out.println("--Get a client:");
-                ss.handleclient(aClient);
-                aClient.close();
+                ss.config(aClient);
+                //aClient.close();
             }
         }
         catch (Exception e){

@@ -7,6 +7,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.Semaphore;
+import java.util.zip.InflaterOutputStream;
 
 public class SeatServer{
 	private SeatTable table;
@@ -18,6 +19,7 @@ public class SeatServer{
 	private boolean[] down;
 	private boolean sycned;
 	static Semaphore semaphore;
+	private int health_counter;
 	public class newRun implements Runnable {
 		private Socket s;
 
@@ -30,6 +32,11 @@ public class SeatServer{
 		}
 	}
 
+	Thread check = new Thread(){
+		public void run() {
+			health_check();
+		}
+	};
 	public void config(Socket s) {
 		Thread th = new Thread(new newRun(s));
 		th.start();
@@ -53,6 +60,11 @@ public class SeatServer{
 			down[i] = false;
 		}
 		done_counter = 0;
+		health_counter = 0;
+		multicast("recover", "0", false);
+		//health_check();
+		System.out.println("healthy chekc done");
+		sycned =true;
 	}
 	// Lamport algorithm method functions
 	private void multicast(String tag, String msg, boolean lamport) {
@@ -71,14 +83,25 @@ public class SeatServer{
 			PrintWriter dataOut = new PrintWriter(s.getOutputStream());
 			dataOut.println(m.toString());
 			dataOut.flush();
+			BufferedReader din = new BufferedReader(new InputStreamReader(s.getInputStream()));
+			String str = din.readLine();
 			s.close();
 		} catch (SocketTimeoutException e) {
 			down[dest] = true;
 			if (tag.equals("done")) {
 				done_counter++;
 			}
+			else if (tag.equals("recover")) {
+				health_counter++;
+			}
 		} catch (Exception e) {
 			down[dest] = true;
+			if (tag.equals("done")) {
+				done_counter++;
+			}
+			else if (tag.equals("recover")) {
+				health_counter++;
+			}
 			//System.err.println("Send message: " + e);
 		}
 	}
@@ -128,6 +151,10 @@ public class SeatServer{
 		while (done_counter < Theatre.NUM_Server - 1) {
 		}
 	}
+	private void health_check() {
+		while (health_counter < Theatre.NUM_Server-1) {
+		}
+	}
 	// Public user methods
     public int get_port() {
         return t.getPort(Server_ID);
@@ -136,7 +163,11 @@ public class SeatServer{
 	public String get_host() {
 		return t.getHostName(Server_ID);
 	}
-
+	private void heartbeat(Socket sock) throws Exception{
+		PrintWriter p = new PrintWriter(sock.getOutputStream());
+		p.println("receiver");
+		p.flush();
+	}
 	void handleclient(Socket theClient){
 		try{
 			BufferedReader din = new BufferedReader(new InputStreamReader(theClient.getInputStream()));
@@ -147,105 +178,115 @@ public class SeatServer{
 			System.out.println(getline);
 			Msg m = Msg.parseMsg(st);
 			int source = m.getSrcId();
-			int dest =  m.getDestId();
+			int dest = m.getDestId();
 			String tag = m.getTag();
 			String mbuff = m.getMessage();
 			boolean lamport = m.getFromUser();
 			System.out.println(tag);
-			if (tag.equals("search")){
-				if (lamport) {
-					Lamport_request();
-					Lamport_wait();
-				}
-				semaphore.acquire();
-				StringTokenizer s1 = new StringTokenizer(mbuff);
-				Vector<Integer> reservedSeats = table.search(s1.nextToken());
-				semaphore.release();
-				if (lamport) {
-					if (reservedSeats.isEmpty()) {
-						pout.println("Failed: no reservation is made by " + mbuff + ".");
-					} else {
-						pout.println("There are " + reservedSeats.size() + " reserved for " + mbuff + ".");
+			if (source < 10086) {
+				heartbeat(theClient);
+			}
+            if (sycned) {
+				System.out.println("In");
+				if (tag.equals("search")) {
+					if (lamport) {
+						Lamport_request();
+						Lamport_wait();
 					}
-					done_check();
-					Lamport_release();
-				}
-			}
-			else if (tag.equals("reserve")){
-				if (lamport) {
-					Lamport_request();
-					Lamport_wait();
-				}
-				semaphore.acquire();
-				StringTokenizer s2 = new StringTokenizer(mbuff);
-				String name = s2.nextToken();
-				int count = Integer.parseInt(s2.nextToken());
-				String message = table.reserve(name, count);
-				semaphore.release();
-				if (lamport) {
-					pout.println(message);
-					multicast(tag, mbuff, false);
-					Lamport_release();
-				} else {
-					sendMsg(source, "done", "0", false);
-				}
-			}
-			else if (tag.equals("delete")){
-				if (lamport) {
-					Lamport_request();
-					Lamport_wait();
-				}
-				semaphore.acquire();
-				StringTokenizer s3 = new StringTokenizer(mbuff);
-				String message = table.delete(s3.nextToken());
-				semaphore.release();
-				if (lamport) {
-					pout.println(message);
-					multicast(tag, mbuff, false);
-					Lamport_release();
-				} else {
-					sendMsg(source, "done", "0", false);
-				}
-			}
-			else if (tag.equals("request")){
-				//System.out.println(mbuff);
-				semaphore.acquire();
-				StringTokenizer s4 = new StringTokenizer(mbuff);
-				int time = Integer.parseInt(s4.nextToken());
-				DC.receiveAction(source, time);
-				q[source] = time;
-				sendMsg(source, "ack", Integer.toString(DC.getValue(Server_ID)), true);
-				System.out.println("Send ACK");
-				DC.sendAction();
-				semaphore.release();
-			}
-			else if (tag.equals("release")){
-				semaphore.acquire();
-				StringTokenizer s5 = new StringTokenizer(mbuff);
-				int time = Integer.parseInt(s5.nextToken());
-				DC.receiveAction(source, time);
-				q[source] = time;
-				semaphore.release();
-			}
-			else if (tag.equals("ack")){
-				semaphore.acquire();
-				System.out.println("Got ACK");
-				StringTokenizer s6 = new StringTokenizer(mbuff);
-				int time = Integer.parseInt(s6.nextToken());
-				DC.receiveAction(source, time);
-				semaphore.release();
-			}
-			else if (tag.equals("done")) {
-				semaphore.acquire();
-				done_counter++;
-				semaphore.release();
-			}
-			else if (tag.equals("recover")){
-				semaphore.acquire();
-				if (down[source] = true) {
+					semaphore.acquire();
+					StringTokenizer s1 = new StringTokenizer(mbuff);
+					Vector<Integer> reservedSeats = table.search(s1.nextToken());
+					semaphore.release();
+					if (lamport) {
+						if (reservedSeats.isEmpty()) {
+							pout.println("Failed: no reservation is made by " + mbuff + ".");
+						} else {
+							pout.println("There are " + reservedSeats.size() + " reserved for " + mbuff + ".");
+						}
+						done_check();
+						Lamport_release();
+					}
+				} else if (tag.equals("reserve")) {
+					if (lamport) {
+						Lamport_request();
+						Lamport_wait();
+					}
+					semaphore.acquire();
+					StringTokenizer s2 = new StringTokenizer(mbuff);
+					String name = s2.nextToken();
+					int count = Integer.parseInt(s2.nextToken());
+					String message = table.reserve(name, count);
+					semaphore.release();
+					if (lamport) {
+						pout.println(message);
+						multicast(tag, mbuff, false);
+						Lamport_release();
+					} else {
+						sendMsg(source, "done", "0", false);
+					}
+				} else if (tag.equals("delete")) {
+					if (lamport) {
+						Lamport_request();
+						Lamport_wait();
+					}
+					semaphore.acquire();
+					StringTokenizer s3 = new StringTokenizer(mbuff);
+					String message = table.delete(s3.nextToken());
+					semaphore.release();
+					if (lamport) {
+						pout.println(message);
+						multicast(tag, mbuff, false);
+						Lamport_release();
+					} else {
+						sendMsg(source, "done", "0", false);
+					}
+				} else if (tag.equals("request")) {
+					//System.out.println(mbuff);
+					semaphore.acquire();
+					StringTokenizer s4 = new StringTokenizer(mbuff);
+					int time = Integer.parseInt(s4.nextToken());
+					DC.receiveAction(source, time);
+					q[source] = time;
+					sendMsg(source, "ack", Integer.toString(DC.getValue(Server_ID)), true);
+					System.out.println("Send ACK");
+					DC.sendAction();
+					semaphore.release();
+				} else if (tag.equals("release")) {
+					semaphore.acquire();
+					StringTokenizer s5 = new StringTokenizer(mbuff);
+					int time = Integer.parseInt(s5.nextToken());
+					DC.receiveAction(source, time);
+					q[source] = time;
+					semaphore.release();
+				} else if (tag.equals("ack")) {
+					semaphore.acquire();
+					System.out.println("Got ACK");
+					StringTokenizer s6 = new StringTokenizer(mbuff);
+					int time = Integer.parseInt(s6.nextToken());
+					DC.receiveAction(source, time);
+					semaphore.release();
+				} else if (tag.equals("done")) {
+					semaphore.acquire();
+					done_counter++;
 
+					semaphore.release();
+				} else if (tag.equals("recover")) {
+					//semaphore.acquire();
+					if (down[source] = false) {
+						sendMsg(source, "health", "0", false);
+					} else {
+						System.out.println("data sent!!");
+						sendMsg(source, "data", "0", false);
+					}
+					//semaphore.release();
 				}
-				semaphore.release();
+			} else {
+				if (tag.equals("health")) {
+					health_counter++;
+				}
+				if (tag.equals("data")) {
+					health_counter = Theatre.NUM_Server-1;
+				}
 			}
 		}
 		catch (Exception e){

@@ -12,9 +12,8 @@ public class Server2 {
             while (true){
                 System.out.println("*****Waiting for a client:*****");
                 Socket aClient = listener.accept();
-                System.out.println("--Get a client:");
-                ss.handleclient(aClient);
-                aClient.close();
+                ss.config(aClient);
+                //aClient.close();
             }
         }
         catch (Exception e){

@@ -81,7 +81,7 @@ public class ReservationSystem{
             rs.search("Xuan");
             rs.search("Yang");
             rs.reserve("Xuan", 5);
-            rs.delete("Xuan");
+           // rs.delete("Xuan");
             rs.reserve("Wang", 6);
         }
 		catch (Exception e){

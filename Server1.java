@@ -8,7 +8,7 @@ public class Server1 {
         try{
             SeatServer ss = new SeatServer(1);
             ServerSocket listener = new ServerSocket(ss.get_port());
-
+            ss.check.start();
             while (true){
                 System.out.println("*****Waiting for a client:*****");
                 Socket aClient = listener.accept();
