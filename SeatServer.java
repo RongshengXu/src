@@ -81,15 +81,19 @@ public class SeatServer{
 		}
 	}
 	private void Lamport_request() throws Exception{
+		semaphore.acquire();
 		q[Server_ID] = DC.getValue(Server_ID);
 		DC.sendAction();
 		System.out.println("TimeStamp: " + q[Server_ID]);
 		multicast("request", Integer.toString(q[Server_ID]), true);
+		semaphore.release();
 	}
 	private void Lamport_release() throws Exception{
+		semaphore.acquire();
 		q[Server_ID] = Integer.MAX_VALUE;
 		DC.sendAction();
 		multicast("release", Integer.toString(q[Server_ID]), true);
+		semaphore.release();
 	}
 	private boolean less(int a1, int b1, int a2, int b2) {
 		if (a1 < a2) {
@@ -100,9 +104,10 @@ public class SeatServer{
 			return (b1 < b2);
 		}
 	}
-	private void Lamport_wait() {
+	private void Lamport_wait() throws Exception{
 		boolean OK = false;
 		while (!OK) {
+			semaphore.acquire();
 			System.out.println("Wait...");
 			//System.out.println(down[0]);
 			OK = true;
@@ -114,6 +119,7 @@ public class SeatServer{
 						OK = false;
 				}
 			}
+			semaphore.release();
 		}
 	}
 	private void done_check() {
@@ -230,6 +236,11 @@ public class SeatServer{
 			else if (tag.equals("done")) {
 				semaphore.acquire();
 				done_counter++;
+				semaphore.release();
+			}
+			else if (tag.equals("recover")){
+				semaphore.acquire();
+				down[] = false;
 				semaphore.release();
 			}
 		}
