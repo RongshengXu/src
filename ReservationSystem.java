@@ -13,15 +13,20 @@ public class ReservationSystem{
         RSID = 0;
         Table = new ServerTable(filePath);
     }
+
 	public void getSocket() throws IOException{
         boolean found = false;
-        for (int i = 0;i < Theatre.NUM_Server&&!found;i ++) {
+        Random rand = new Random();
+        int num = rand.nextInt(10) + 1;
+        for (int i = 0;i < Table.getSize()&&!found;i++) {
             try {
-                Socket server = new Socket(Table.getHostName(i), Table.getPort(i));
+                Socket server = new Socket(Table.getHostName((i+num)%Table.getSize()),
+                        Table.getPort((i+num)%Table.getSize()));
                 din = new BufferedReader(new InputStreamReader(server.getInputStream()));
                 pout = new PrintStream(server.getOutputStream());
-                RSID = i;
+                RSID = (i+num)%Table.getSize();
                 found = true;
+                System.out.println("Client connect to Server " + RSID);
             }catch (Exception e) {
               //  System.out.println("Wrong!");
             }

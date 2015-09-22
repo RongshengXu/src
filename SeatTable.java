@@ -1,21 +1,62 @@
 import java.util.*;
 
 public class SeatTable{
-	final int seatNumber = 100;
+	final int seatNumber = 50;
 	private String [] reserveNames = new String[seatNumber];
 	private boolean [] reserveStatus = new boolean[seatNumber];
 	private int num_seat_resreved = 0;
 	
 	public SeatTable(){
 		for (int i = 0; i < seatNumber; i++){
-			reserveNames[i] = "";
+			reserveNames[i] = "*";
 			reserveStatus[i] = false;
 			num_seat_resreved = 0;
 		}
 	}
-	
+
+    void renewNum_seat_reserved(){
+        num_seat_resreved = 0;
+        for (int i = 0; i < seatNumber; i++){
+            if (reserveStatus[i]){
+                num_seat_resreved++;
+            }
+        }
+    }
+
 	int getNumLeft(){
 		return seatNumber - num_seat_resreved;
+	}
+	
+	int getNumTotal(){
+		return seatNumber;
+	}
+	
+	void setNamesArray(String newName, int index){
+		reserveNames[index] = newName;
+	}
+	
+	void setStatusArray(boolean newStatus, int index){
+		reserveStatus[index] = newStatus;
+	}
+	
+	String[] getNamesArray(){
+		String[] result = new String[seatNumber];
+		
+		for (int i = 0; i < seatNumber; i++){
+			result[i] = reserveNames[i];
+		}
+		
+		return result;
+	}
+	
+	boolean[] getStatusArray(){
+		boolean[] result = new boolean[seatNumber];
+		
+		for (int i = 0; i < seatNumber; i++){
+			result[i] = reserveStatus[i];
+		}
+		
+		return result;
 	}
 	
 	Vector<Integer> search(String name){
@@ -26,8 +67,8 @@ public class SeatTable{
 				reservedSeats.add(i);
 			}
 		}
-		
-		System.out.println("The size of reservedSeats for " + name + " is: " + reservedSeats.size()); // ***********************
+
+        //System.out.println("The size of reservedSeats for " + name + " is: " + reservedSeats.size()); // ***********************
 		return reservedSeats;
 	}
 	
@@ -64,6 +105,7 @@ public class SeatTable{
 				}
 			}
 		}
+        //renewNum_seat_reserved();
 		
 		message = ("The seats have been reserved for " + name + ": ");
 		for (int i = 0; i < newReservedSeats.size() - 1; i++){
@@ -84,10 +126,11 @@ public class SeatTable{
 		
 		for (int i =0; i < reservedSeats.size(); i++){
 			reserveStatus[reservedSeats.get(i)] = false;
-			reserveNames[reservedSeats.get(i)] = "";
+			reserveNames[reservedSeats.get(i)] = "*";
 			num_seat_resreved--;
 		}
 		int num_seats_released = reservedSeats.size();
+        renewNum_seat_reserved();
 		int num_seat_left = seatNumber - num_seat_resreved;
 		
 		message = (num_seats_released + " seats have been released. " + num_seat_left +

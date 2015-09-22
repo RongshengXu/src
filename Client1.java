@@ -12,25 +12,48 @@ public class Client1 {
         String path = f.getAbsolutePath().substring(0, f.getAbsolutePath().length() - 1);
         try {
             while (true) {
-                ReservationSystem rs = new ReservationSystem(path + "/src/table.txt");
-                System.out.println("Command:");
+                ReservationSystem rs = new ReservationSystem(path + "/table.txt");
+                System.out.print("Command-> ");
                 Scanner in = new Scanner(System.in);
                 String command = in.nextLine();
-                System.out.println(command);
+
                 StringTokenizer st = new StringTokenizer(command);
                 String tag = st.nextToken();
                 if (tag.equals("delete")) {
-                    String name = st.nextToken();
-                    rs.delete(name);
+                	if (st.hasMoreTokens()){
+                		String name = st.nextToken();
+                        rs.delete(name);
+                	}
+                	else{
+                		System.out.println("Please specify a name for the delete command!");
+                	}
                 }
                 else if (tag.equals("reserve")) {
-                    String name = st.nextToken();
-                    int count = Integer.parseInt(st.nextToken());
-                    rs.reserve(name, count);
+                	if (!st.hasMoreTokens()){
+                		System.out.println("Please specify a name and count for the reserve command!");
+                	}
+                	else{
+                		String name = st.nextToken();
+                		if (!st.hasMoreTokens()){
+                			System.out.println("Please specify a count for the reserve command!");
+                		}
+                		else{
+		                    int count = Integer.parseInt(st.nextToken());
+		                    rs.reserve(name, count);
+                		}
+                	}
                 }
                 else if (tag.equals("search")) {
-                    String name = st.nextToken();
-                    rs.search(name);
+                	if (st.hasMoreTokens()){
+                        String name = st.nextToken();
+                        rs.search(name);	
+                	}
+                	else{
+                		System.out.println("Please specify a name for the search command!");
+                	}
+                }
+                else{
+                	System.out.println("Not a valid command!");
                 }
             }
         } catch (Exception e) {
