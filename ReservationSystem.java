@@ -41,9 +41,9 @@ public class ReservationSystem{
 		pout.println(message.toString());
 		pout.flush();
         String s = din.readLine();
-        while (s == null) {
-            s =din.readLine();
-        }
+       // while (s == null) {
+       // s =din.readLine();
+       // }
         System.out.println(s);
 	}
 	
@@ -54,9 +54,9 @@ public class ReservationSystem{
 		pout.println(message.toString());
 		pout.flush();
         String s = din.readLine();
-        while (s == null) {
-            s = din.readLine();
-        }
+       // while (s == null) {
+       //    s = din.readLine();
+       // }
         System.out.println(s);
 	}
 	
@@ -67,9 +67,9 @@ public class ReservationSystem{
         pout.println(message.toString());
         pout.flush();
         String s = din.readLine();
-        while (s == null) {
-            s =din.readLine();
-        }
+        //while (s == null) {
+        //    s =din.readLine();
+        //}
         System.out.println(s);
     }
 	

@@ -43,8 +43,6 @@ public class SeatServer{
 		th.start();
 	}
 
-	public IntLinkedList neighbors = new IntLinkedList();
-
 	public SeatServer(int ID, String filePath) throws Exception{
 		semaphore = new Semaphore(1);
         //semaphore.acquire();
